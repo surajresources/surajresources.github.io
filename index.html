@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suraj's Resources</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+<script>
+  // ── Paste your Firebase config here ──────────────────
+const FB = {
+  apiKey: "AIzaSyDis3Ub3MAMWceOG3zYPczKzl-ncNSEgGE",
+  authDomain: "surajrm.firebaseapp.com",
+  projectId: "surajrm",
+  storageBucket: "surajrm.firebasestorage.app",
+  messagingSenderId: "623228884068",
+  appId: "1:623228884068:web:67e848a3a1730c35f4bb71",
+  measurementId: "G-8QW19PL63T"
+};
+</script>
+
+<style>
+:root {
+  --bg:       #f4f1eb;
+  --surface:  #ffffff;
+  --border:   #e0dbd0;
+  --border2:  #ccc8be;
+  --text:     #1a1814;
+  --muted:    #8a8478;
+  --accent:   #1a1814;
+  --watch:    #1a1814;
+  --read:     #1a1814;
+  --tag-bg:   #e8e4dc;
+  --del:      #c0392b;
+  --green:    #2d6a4f;
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-body:    'Lato', sans-serif;
+  --r: 10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+header {
+  background: var(--text);
+  color: var(--bg);
+  padding: 28px 40px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.site-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.site-name em {
+  font-style: normal;
+  opacity: .45;
+  font-weight: 400;
+  font-size: 14px;
+  margin-left: 10px;
+  letter-spacing: 0;
+}
+.sync-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,.08);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255,255,255,.5);
+  letter-spacing: .06em;
+}
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #888; flex-shrink: 0;
+  transition: background .3s;
+}
+.sync-dot.ok   { background: #5dbb7a; }
+.sync-dot.err  { background: #e05a5a; }
+.sync-dot.busy { background: #f0c040; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Main toggle (Watch / Read) ─────────────────────── */
+.type-toggle {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  padding: 0 40px;
+  gap: 0;
+}
+.tt {
+  padding: 14px 24px 12px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tt:hover { color: var(--text); }
+.tt.on { color: var(--text); border-bottom-color: var(--text); }
+.tt-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--tag-bg);
+  border-radius: 20px;
+  padding: 1px 7px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.tt.on .tt-count { background: var(--text); color: var(--bg); }
+
+/* ── Page body ──────────────────────────────────────── */
+.page { max-width: 780px; margin: 0 auto; padding: 32px 40px; }
+@media(max-width:640px){ .page{ padding:20px 16px; } header{ padding:20px 16px; } .type-toggle{ padding:0 16px; } }
+
+/* ── Section chips (playlists / folders) ───────────── */
+.chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip:hover { border-color: var(--text); color: var(--text); }
+.chip.on {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+.chip-count {
+  font-size: 10px;
+  opacity: .6;
+}
+.chip-del {
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity .12s;
+  line-height: 1;
+  margin-left: 2px;
+}
+.chip:hover .chip-del { opacity: .5; }
+.chip-del:hover { opacity: 1 !important; color: var(--del); }
+
+/* new chip button */
+.chip-new {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: transparent;
+  border: 1.5px dashed var(--border2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip-new:hover { border-color: var(--text); color: var(--text); }
+
+/* inline new-group form */
+.new-chip-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.new-chip-form input {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid var(--text);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  width: 140px;
+}
+.new-chip-form button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: none;
+  background: var(--text);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+/* ── Add form ────────────────────────────────────────── */
+.add-form {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 32px;
+}
+.add-form-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.add-form-title span {
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 4px;
+  padding: 1px 7px;
+  margin-right: 8px;
+  font-size: 10px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media(max-width:500px){ .form-grid{ grid-template-columns:1fr; } }
+.fi {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+.fi:focus { border-color: var(--text); }
+.fi::placeholder { color: var(--muted); }
+textarea.fi { resize:vertical; min-height:70px; line-height:1.5; font-size:13px; }
+.form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dest-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+.dest-label strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.btn-submit {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 28px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  letter-spacing: .02em;
+}
+.btn-submit:hover { opacity: .8; }
+.btn-submit:active { transform: scale(.97); }
+
+/* ── Entries ─────────────────────────────────────────── */
+.entries-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.entries-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.entries-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.entry-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  animation: pop .18s ease;
+  transition: border-color .15s;
+}
+.entry-card:hover { border-color: var(--border2); }
+@keyframes pop { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+.entry-main { flex:1; min-width:0; }
+.entry-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+.entry-title a { color: var(--text); text-decoration: none; }
+.entry-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.entry-url {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry-url a { color: var(--muted); text-decoration: none; }
+.entry-url a:hover { color: var(--text); }
+
+.entry-notes {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
+.entry-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.entry-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+.entry-group-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--tag-bg);
+  border-radius: 20px;
+  padding: 2px 9px;
+  color: var(--muted);
+}
+
+/* delete button — always visible, right side */
+.btn-del {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  margin-top: 1px;
+}
+.btn-del:hover {
+  background: #fdecea;
+  border-color: var(--del);
+  color: var(--del);
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .05em;
+}
+
+/* warn banner */
+.warn {
+  background: #fff8e6;
+  border: 1.5px solid #f0c070;
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: #7a5c00;
+}
+.warn strong { color: #3a2c00; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="site-name">Suraj's Resources <em>surajresources.github.io</em></div>
+  <div class="sync-pill">
+    <span class="sync-dot busy" id="sd"></span>
+    <span id="sl">connecting</span>
+  </div>
+</header>
+
+<!-- Watch / Read top toggle -->
+<div class="type-toggle">
+  <div class="tt on" id="tt-watch">
+    📺 Watch <span class="tt-count" id="tc-watch">0</span>
+  </div>
+  <div class="tt" id="tt-read">
+    📖 Read <span class="tt-count" id="tc-read">0</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <div id="warn" class="warn" style="display:none">
+    ⚠️ <strong>Firebase not configured.</strong><br>
+    Open index.html and replace the PASTE_YOUR_… values with your Firebase project config to sync across devices.<br>
+    Until then, data saves in this browser only.
+  </div>
+
+  <!-- Playlist / Folder chips -->
+  <div class="chips-row" id="chips-row"></div>
+
+  <!-- Add form -->
+  <div class="add-form">
+    <div class="add-form-title">
+      <span id="form-label">Watch</span>
+      <span id="dest-hint" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);font-weight:400;letter-spacing:.03em;">Adding to: <strong id="dest-name">All</strong></span>
+    </div>
+    <div class="form-grid">
+      <input class="fi" id="f-title" placeholder="Title…">
+      <input class="fi" id="f-link" type="url" placeholder="https://… (optional)">
+    </div>
+    <textarea class="fi" id="f-notes" placeholder="Notes, why it's useful… (optional)"></textarea>
+    <div class="form-foot">
+      <div class="dest-label">Goes into: <strong id="dest-label2">All</strong></div>
+      <button class="btn-submit" id="btn-add">Add ↵</button>
+    </div>
+  </div>
+
+  <!-- Entry list -->
+  <div class="entries-header">
+    <div class="entries-title" id="list-title">All</div>
+    <div class="entries-count" id="list-count"></div>
+  </div>
+  <div id="list"></div>
+
+</div>
+
+<script>
+const LS = 'suraj_v5';
+
+// ── State ─────────────────────────────────────────────
+let S = {
+  entries: [],
+  groups: {
+    watch: [{ id:'w0', name:'All', emoji:'📋' }],
+    read:  [{ id:'r0', name:'All', emoji:'📋' }]
+  }
+};
+let ui = { tab:'watch', active:{ watch:'w0', read:'r0' } };
+
+// ── Persist ───────────────────────────────────────────
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS)||'{}');
+    if (d.entries) S.entries = d.entries;
+    if (d.groups)  S.groups  = d.groups;
+    if (d.active)  ui.active = d.active;
+  } catch(e){}
+}
+function saveLocal() {
+  localStorage.setItem(LS, JSON.stringify({...S, active:ui.active}));
+}
+
+let firebaseSave = async () => {};
+
+function setSyncUI(state, msg) {
+  document.getElementById('sd').className = 'sync-dot '+state;
+  document.getElementById('sl').textContent = msg;
+}
+</script>
+
+<script type="module">
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const configured = !Object.values(FB).some(v=>v.startsWith('PASTE_'));
+if (!configured) {
+  document.getElementById('warn').style.display = 'block';
+  setSyncUI('err','not configured');
+}
+
+if (configured) {
+  try {
+    const app = initializeApp(FB);
+    const db  = getFirestore(app);
+    const ref = doc(db,'resources','main');
+
+    onSnapshot(ref, snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        S.entries = d.entries || [];
+        S.groups  = d.groups  || S.groups;
+        saveLocal();
+        renderAll();
+      }
+      setSyncUI('ok','synced');
+    }, err => { setSyncUI('err','offline'); });
+
+    firebaseSave = async () => {
+      setSyncUI('busy','saving…');
+      try { await setDoc(ref, S); setSyncUI('ok','synced'); }
+      catch(e){ setSyncUI('err','failed'); }
+    };
+  } catch(e){ setSyncUI('err','config error'); }
+}
+
+async function persist() { saveLocal(); await firebaseSave(); }
+
+// ── Groups ────────────────────────────────────────────
+const WE = ['🎬','🎞','📽','🍿','🎦','▶️','🎥'];
+const RE = ['📁','📂','🗂','📌','🔖','💡','📝'];
+
+let newGroupOpen = false;
+
+function renderChips() {
+  const t   = ui.tab;
+  const def = t==='watch'?'w0':'r0';
+  const row = document.getElementById('chips-row');
+  let html = '';
+
+  S.groups[t].forEach(g => {
+    const cnt = g.id===def
+      ? S.entries.filter(e=>e.type===t).length
+      : S.entries.filter(e=>e.type===t&&e.gid===g.id).length;
+    const on = ui.active[t]===g.id ? 'on' : '';
+    const delBtn = g.id!==def
+      ? `<span class="chip-del" data-act="delgroup" data-t="${t}" data-id="${g.id}">✕</span>` : '';
+    html += `<div class="chip ${on}" data-act="selgroup" data-t="${t}" data-id="${g.id}">
+      <span>${g.emoji} ${x(g.name)}</span>
+      <span class="chip-count">${cnt}</span>${delBtn}
+    </div>`;
+  });
+
+  if (!newGroupOpen) {
+    html += `<button class="chip-new" id="chip-new-btn">+ New ${t==='watch'?'Playlist':'Folder'}</button>`;
+  } else {
+    html += `<form class="new-chip-form" id="new-chip-form">
+      <input id="ng-inp" placeholder="${t==='watch'?'Playlist':'Folder'} name…" maxlength="36" autofocus>
+      <button type="submit">Add</button>
+    </form>`;
+  }
+  row.innerHTML = html;
+
+  // bind new form if open
+  if (newGroupOpen) {
+    const form = document.getElementById('new-chip-form');
+    form.addEventListener('submit', e => { e.preventDefault(); confirmGroup(); });
+    const inp = document.getElementById('ng-inp');
+    inp.focus();
+    inp.addEventListener('keydown', e=>{ if(e.key==='Escape'){ newGroupOpen=false; renderChips(); } });
+  }
+
+  // update dest labels
+  const g = S.groups[t].find(g=>g.id===ui.active[t]);
+  const gname = g ? g.name : 'All';
+  document.getElementById('dest-label2').textContent = gname;
+  document.getElementById('dest-name').textContent   = gname;
+}
+
+function confirmGroup() {
+  const inp  = document.getElementById('ng-inp');
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) return;
+  const t    = ui.tab;
+  const pool = t==='watch'?WE:RE;
+  const id   = t[0]+'_'+Date.now();
+  S.groups[t].push({ id, name, emoji: pool[Math.floor(Math.random()*pool.length)] });
+  ui.active[t] = id;
+  newGroupOpen = false;
+  persist(); renderAll();
+}
+
+function delGroup(t, id) {
+  const def = t==='watch'?'w0':'r0';
+  S.entries.forEach(e=>{ if(e.type===t&&e.gid===id) e.gid=def; });
+  S.groups[t] = S.groups[t].filter(g=>g.id!==id);
+  if(ui.active[t]===id) ui.active[t]=def;
+  persist(); renderAll();
+}
+
+// ── Entries ───────────────────────────────────────────
+function addEntry() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  const t = ui.tab;
+  S.entries.unshift({
+    id:    Date.now(),
+    title,
+    link:  document.getElementById('f-link').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    type:  t,
+    gid:   ui.active[t],
+    date:  new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+  });
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-link').value  = '';
+  document.getElementById('f-notes').value = '';
+  persist(); renderAll();
+}
+
+function delEntry(id) {
+  S.entries = S.entries.filter(e=>e.id!==id);
+  persist(); renderList();
+}
+
+// ── Tab ───────────────────────────────────────────────
+function switchTab(t) {
+  ui.tab = t;
+  document.getElementById('tt-watch').className = 'tt'+(t==='watch'?' on':'');
+  document.getElementById('tt-read').className  = 'tt'+(t==='read'?' on':'');
+  document.getElementById('form-label').textContent = t==='watch'?'Watch':'Read';
+  newGroupOpen = false;
+  renderAll();
+}
+
+function selectGroup(t, id) {
+  ui.active[t] = id;
+  if (ui.tab!==t) switchTab(t);
+  else { renderChips(); renderList(); }
+}
+
+// ── Render list ───────────────────────────────────────
+function renderList() {
+  const t   = ui.tab;
+  const gid = ui.active[t];
+  const def = t==='watch'?'w0':'r0';
+  const isAll = gid===def;
+  const rows = isAll
+    ? S.entries.filter(e=>e.type===t)
+    : S.entries.filter(e=>e.type===t&&e.gid===gid);
+
+  const g = S.groups[t].find(g=>g.id===gid);
+  document.getElementById('list-title').textContent  = g ? `${g.emoji} ${g.name}` : 'All';
+  document.getElementById('list-count').textContent  = `${rows.length} item${rows.length!==1?'s':''}`;
+  document.getElementById('tc-watch').textContent    = S.entries.filter(e=>e.type==='watch').length;
+  document.getElementById('tc-read').textContent     = S.entries.filter(e=>e.type==='read').length;
+
+  const el = document.getElementById('list');
+  if (!rows.length) { el.innerHTML=`<div class="empty">nothing here yet — add something above</div>`; return; }
+
+  el.innerHTML = rows.map(e => {
+    const titleH = e.link
+      ? `<a href="${x(e.link)}" target="_blank" rel="noopener">${x(e.title)}</a>`
+      : x(e.title);
+    const urlH = e.link
+      ? `<div class="entry-url"><a href="${x(e.link)}" target="_blank" rel="noopener">${x(trimU(e.link))}</a></div>` : '';
+    const notesH = e.notes ? `<div class="entry-notes">${x(e.notes)}</div>` : '';
+    let tagH = '';
+    if (isAll && e.gid !== def) {
+      const eg = S.groups[t].find(g=>g.id===e.gid);
+      if (eg) tagH = `<span class="entry-group-chip">${eg.emoji} ${x(eg.name)}</span>`;
+    }
+    return `<div class="entry-card">
+      <div class="entry-main">
+        <div class="entry-title">${titleH}</div>
+        ${urlH}${notesH}
+        <div class="entry-foot">
+          <span class="entry-date">${e.date}</span>${tagH}
+        </div>
+      </div>
+      <button class="btn-del" data-act="delentry" data-id="${e.id}" title="Delete">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function renderAll() { renderChips(); renderList(); }
+
+// ── Event delegation ──────────────────────────────────
+document.addEventListener('click', e => {
+  const el = e.target;
+
+  if (el.id==='btn-add')    { addEntry(); return; }
+  if (el.id==='tt-watch' || el.closest('#tt-watch')) { switchTab('watch'); return; }
+  if (el.id==='tt-read'  || el.closest('#tt-read'))  { switchTab('read');  return; }
+  if (el.id==='chip-new-btn') { newGroupOpen=true; renderChips(); setTimeout(()=>document.getElementById('ng-inp')?.focus(),10); return; }
+
+  const act = el.dataset.act || el.closest('[data-act]')?.dataset.act;
+  const tgt = el.closest('[data-act]') || el;
+
+  if (act==='selgroup') { selectGroup(tgt.dataset.t, tgt.dataset.id); return; }
+  if (act==='delgroup') { e.stopPropagation(); delGroup(tgt.dataset.t, tgt.dataset.id); return; }
+  if (act==='delentry') { delEntry(Number(tgt.dataset.id)); return; }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && (e.target.id==='f-title'||e.target.id==='f-link')) addEntry();
+});
+
+// ── Init ──────────────────────────────────────────────
+loadLocal();
+renderAll();
+if (!configured) setSyncUI('err','not configured');
+</script>
+</body>
+</html>
