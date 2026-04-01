@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suraj's Resources</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg:#f4f1eb; --surface:#fff; --border:#e0dbd0; --border2:#ccc8be;
+  --text:#1a1814; --muted:#8a8478; --tag:#e8e4dc; --del:#c0392b;
+  --font-d:'Syne',sans-serif; --font-m:'JetBrains Mono',monospace; --font-b:'Lato',sans-serif;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;}
+
+header{background:var(--text);color:var(--bg);padding:22px 36px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.site-name{font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.02em;}
+.site-name em{font-style:normal;opacity:.4;font-weight:400;font-size:13px;margin-left:10px;}
+.sync-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;white-space:nowrap;}
+.sd{width:6px;height:6px;border-radius:50%;background:#888;flex-shrink:0;transition:background .3s;}
+.sd.ok{background:#5dbb7a;} .sd.err{background:#e05a5a;} .sd.busy{background:#f0c040;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.type-bar{background:var(--surface);border-bottom:2px solid var(--border);padding:0 36px;display:flex;}
+.tt{padding:14px 22px 12px;font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;user-select:none;display:flex;align-items:center;gap:8px;}
+.tt:hover{color:var(--text);}
+.tt.on{color:var(--text);border-bottom-color:var(--text);}
+.tt-n{font-family:var(--font-m);font-size:11px;background:var(--tag);border-radius:20px;padding:1px 7px;color:var(--muted);font-weight:400;}
+.tt.on .tt-n{background:var(--text);color:var(--bg);}
+
+.page{max-width:760px;margin:0 auto;padding:28px 36px 60px;}
+@media(max-width:600px){.page{padding:18px 14px 60px;}header{padding:18px 14px;}.type-bar{padding:0 14px;}}
+
+.chips{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:24px;}
+.chip{font-family:var(--font-m);font-size:11px;padding:6px 13px;border-radius:20px;background:var(--surface);border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.chip:hover{border-color:var(--text);color:var(--text);}
+.chip.on{background:var(--text);border-color:var(--text);color:var(--bg);}
+.chip-c{font-size:10px;opacity:.6;}
+.chip-x{font-size:12px;opacity:0;transition:opacity .12s;line-height:1;margin-left:1px;}
+.chip:hover .chip-x{opacity:.5;}
+.chip-x:hover{opacity:1!important;color:var(--del);}
+.chip-new{font-family:var(--font-m);font-size:11px;padding:6px 13px;border-radius:20px;background:transparent;border:1.5px dashed var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.chip-new:hover{border-color:var(--text);color:var(--text);}
+.nc-form{display:flex;align-items:center;gap:6px;}
+.nc-form input{font-family:var(--font-m);font-size:11px;padding:5px 10px;border-radius:20px;border:1.5px solid var(--text);background:var(--surface);color:var(--text);outline:none;width:150px;}
+.nc-form button{font-family:var(--font-m);font-size:11px;padding:5px 12px;border-radius:20px;border:none;background:var(--text);color:var(--bg);cursor:pointer;}
+
+.add-form{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:28px;}
+.form-meta{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.form-meta .badge{background:var(--text);color:var(--bg);border-radius:4px;padding:2px 8px;font-size:10px;letter-spacing:.08em;}
+.form-meta .into strong{color:var(--text);}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+@media(max-width:480px){.fgrid{grid-template-columns:1fr;}}
+.fi{font-size:14px;padding:10px 13px;border:1.5px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;width:100%;font-family:var(--font-b);}
+.fi:focus{border-color:var(--text);}
+.fi::placeholder{color:var(--muted);}
+textarea.fi{resize:vertical;min-height:68px;line-height:1.5;font-size:13px;}
+.form-foot{display:flex;align-items:center;justify-content:flex-end;margin-top:12px;}
+.btn-add{font-family:var(--font-d);font-size:14px;font-weight:700;padding:10px 30px;background:var(--text);color:var(--bg);border:none;border-radius:7px;cursor:pointer;transition:opacity .15s,transform .1s;}
+.btn-add:hover{opacity:.8;} .btn-add:active{transform:scale(.97);}
+
+.lh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.lt{font-family:var(--font-d);font-size:19px;font-weight:800;letter-spacing:-.01em;}
+.lc{font-family:var(--font-m);font-size:11px;color:var(--muted);}
+
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 16px 16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;animation:pop .18s ease;transition:border-color .15s;}
+.card:hover{border-color:var(--border2);}
+@keyframes pop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.card-body{flex:1;min-width:0;}
+.card-title{font-family:var(--font-d);font-size:16px;font-weight:700;line-height:1.25;margin-bottom:3px;word-break:break-word;}
+.card-title a{color:var(--text);text-decoration:none;}
+.card-title a:hover{text-decoration:underline;text-underline-offset:3px;}
+.card-url{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-url a{color:var(--muted);text-decoration:none;}
+.card-url a:hover{color:var(--text);}
+.card-notes{font-size:13px;color:#555;line-height:1.55;white-space:pre-wrap;margin-bottom:8px;}
+.card-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.card-date{font-family:var(--font-m);font-size:10px;color:var(--muted);}
+.card-tag{font-family:var(--font-m);font-size:10px;background:var(--tag);border-radius:20px;padding:2px 9px;color:var(--muted);}
+.btn-del{flex-shrink:0;width:34px;height:34px;border-radius:7px;border:1.5px solid var(--border);background:none;color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.btn-del:hover{background:#fdecea;border-color:var(--del);color:var(--del);}
+
+.empty{text-align:center;padding:56px 0;color:var(--muted);font-family:var(--font-m);font-size:12px;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="site-name">Suraj's Resources <em>surajresources.github.io</em></div>
+  <div class="sync-pill"><span class="sd busy" id="sd"></span><span id="sl">connecting…</span></div>
+</header>
+
+<div class="type-bar">
+  <div class="tt on" id="tt-watch">📺 Watch <span class="tt-n" id="tc-watch">0</span></div>
+  <div class="tt"    id="tt-read" >📖 Read  <span class="tt-n" id="tc-read">0</span></div>
+</div>
+
+<div class="page">
+  <div id="chips" class="chips"></div>
+  <div class="add-form">
+    <div class="form-meta">
+      <span class="badge" id="form-badge">WATCH</span>
+      <span class="into">Adding to: <strong id="form-dest">All</strong></span>
+    </div>
+    <div class="fgrid">
+      <input  class="fi" id="f-title" placeholder="Title…">
+      <input  class="fi" id="f-link"  type="url" placeholder="https://… (optional)">
+    </div>
+    <textarea class="fi" id="f-notes" placeholder="Notes, why it's useful… (optional)"></textarea>
+    <div class="form-foot"><button class="btn-add" id="btn-add">Add ↵</button></div>
+  </div>
+  <div class="lh"><div class="lt" id="lt"></div><div class="lc" id="lc"></div></div>
+  <div id="list"></div>
+</div>
+
+<script>
+// ── Firebase config ───────────────────────────────────
+const FB_CONFIG = {
+  apiKey:            "AIzaSyDis3Ub3MAMWceOG3zYPczKzl-ncNSEgGE",
+  authDomain:        "surajrm.firebaseapp.com",
+  projectId:         "surajrm",
+  storageBucket:     "surajrm.firebasestorage.app",
+  messagingSenderId: "623228884068",
+  appId:             "1:623228884068:web:67e848a3a1730c35f4bb71"
+};
+
+// ── State ─────────────────────────────────────────────
+const LS_KEY = 'suraj_v6';
+let S = {
+  entries: [],
+  groups: {
+    watch: [{ id:'w0', name:'All', emoji:'📋' }],
+    read:  [{ id:'r0', name:'All', emoji:'📋' }]
+  }
+};
+let ui = { tab:'watch', active:{ watch:'w0', read:'r0' }, newGroupOpen:false };
+
+// ── LocalStorage ──────────────────────────────────────
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if (d.entries) S.entries = d.entries;
+    if (d.groups)  S.groups  = d.groups;
+    if (d.active)  ui.active = d.active;
+  } catch(e) {}
+}
+function saveLocal() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ entries:S.entries, groups:S.groups, active:ui.active })); } catch(e) {}
+}
+
+// ── Sync indicator ────────────────────────────────────
+function setSync(state, msg) {
+  document.getElementById('sd').className = 'sd ' + state;
+  document.getElementById('sl').textContent = msg;
+}
+
+// ── Firebase ──────────────────────────────────────────
+let fbSave = null;
+
+var connectTimer = setTimeout(function() { setSync('err', 'local only'); }, 8000);
+
+try {
+  firebase.initializeApp(FB_CONFIG);
+  const db  = firebase.firestore();
+  const ref = db.collection('resources').doc('main');
+
+  ref.onSnapshot(function(snap) {
+    clearTimeout(connectTimer);
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.entries) S.entries = d.entries;
+      if (d.groups)  S.groups  = d.groups;
+      saveLocal();
+    }
+    setSync('ok', 'synced ✓');
+    renderAll();
+  }, function(err) {
+    clearTimeout(connectTimer);
+    console.error('Firestore error:', err);
+    setSync('err', 'offline');
+  });
+
+  fbSave = function() {
+    setSync('busy', 'saving…');
+    ref.set({ entries: S.entries, groups: S.groups })
+      .then(function()  { setSync('ok', 'synced ✓'); })
+      .catch(function(e){ console.error(e); setSync('err', 'save failed'); });
+  };
+
+} catch(e) {
+  clearTimeout(connectTimer);
+  console.error('Firebase init error:', e);
+  setSync('err', 'firebase error');
+}
+
+function persist() {
+  saveLocal();
+  if (fbSave) fbSave();
+}
+
+// ── Helpers ───────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function trimUrl(u) {
+  const s = u.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');
+  return s.length > 54 ? s.slice(0,54)+'…' : s;
+}
+function defId(t) { return t==='watch' ? 'w0' : 'r0'; }
+function today() {
+  return new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+// ── Groups ────────────────────────────────────────────
+var W_EMOJIS = ['🎬','🎞','📽','🍿','🎦','▶️','🎥'];
+var R_EMOJIS = ['📁','📂','🗂','📌','🔖','💡','📝'];
+
+function addGroup(name) {
+  var t = ui.tab;
+  var pool = t==='watch' ? W_EMOJIS : R_EMOJIS;
+  var id   = t[0]+'_'+Date.now();
+  var emoji = pool[Math.floor(Math.random()*pool.length)];
+  S.groups[t].push({ id:id, name:name, emoji:emoji });
+  ui.active[t]    = id;
+  ui.newGroupOpen = false;
+  persist(); renderAll();
+}
+
+function deleteGroup(t, id) {
+  var def = defId(t);
+  S.entries.forEach(function(e){ if(e.type===t && e.gid===id) e.gid=def; });
+  S.groups[t] = S.groups[t].filter(function(g){ return g.id!==id; });
+  if (ui.active[t]===id) ui.active[t]=def;
+  persist(); renderAll();
+}
+
+// ── Entries ───────────────────────────────────────────
+function addEntry() {
+  var title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  var t = ui.tab;
+  S.entries.unshift({
+    id:    Date.now(),
+    title: title,
+    link:  document.getElementById('f-link').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    type:  t,
+    gid:   ui.active[t],
+    date:  today()
+  });
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-link').value  = '';
+  document.getElementById('f-notes').value = '';
+  persist(); renderAll();
+}
+
+function deleteEntry(id) {
+  S.entries = S.entries.filter(function(e){ return e.id!==id; });
+  persist(); renderAll();
+}
+
+// ── Tab ───────────────────────────────────────────────
+function switchTab(t) {
+  ui.tab = t; ui.newGroupOpen = false;
+  document.getElementById('tt-watch').className = 'tt'+(t==='watch'?' on':'');
+  document.getElementById('tt-read').className  = 'tt'+(t==='read' ?' on':'');
+  document.getElementById('form-badge').textContent = t.toUpperCase();
+  renderAll();
+}
+
+function selectGroup(t, id) {
+  ui.active[t] = id; ui.newGroupOpen = false;
+  if (ui.tab !== t) {
+    ui.tab = t;
+    document.getElementById('tt-watch').className = 'tt'+(t==='watch'?' on':'');
+    document.getElementById('tt-read').className  = 'tt'+(t==='read' ?' on':'');
+    document.getElementById('form-badge').textContent = t.toUpperCase();
+  }
+  renderAll();
+}
+
+// ── Render chips ──────────────────────────────────────
+function renderChips() {
+  var t   = ui.tab;
+  var def = defId(t);
+  var row = document.getElementById('chips');
+  var html = '';
+
+  (S.groups[t]||[]).forEach(function(g) {
+    var cnt = g.id===def
+      ? S.entries.filter(function(e){ return e.type===t; }).length
+      : S.entries.filter(function(e){ return e.type===t && e.gid===g.id; }).length;
+    var on   = ui.active[t]===g.id ? ' on' : '';
+    var delX = g.id!==def
+      ? '<span class="chip-x" data-act="delgroup" data-t="'+t+'" data-id="'+esc(g.id)+'">✕</span>' : '';
+    html += '<div class="chip'+on+'" data-act="selgroup" data-t="'+t+'" data-id="'+esc(g.id)+'">'
+          + g.emoji+' '+esc(g.name)+' <span class="chip-c">'+cnt+'</span>'+delX+'</div>';
+  });
+
+  if (!ui.newGroupOpen) {
+    html += '<button class="chip-new" id="btn-nc">+ New '+(t==='watch'?'Playlist':'Folder')+'</button>';
+  } else {
+    html += '<div class="nc-form" id="nc-form">'
+          + '<input id="nc-inp" placeholder="'+(t==='watch'?'Playlist':'Folder')+' name…" maxlength="36">'
+          + '<button id="nc-ok">Add</button></div>';
+  }
+
+  row.innerHTML = html;
+
+  if (ui.newGroupOpen) {
+    var inp = document.getElementById('nc-inp');
+    inp.focus();
+    document.getElementById('nc-ok').addEventListener('click', function(){
+      var v = inp.value.trim(); if (v) addGroup(v);
+    });
+    inp.addEventListener('keydown', function(e){
+      if (e.key==='Enter')  { var v=inp.value.trim(); if(v) addGroup(v); }
+      if (e.key==='Escape') { ui.newGroupOpen=false; renderChips(); }
+    });
+  }
+
+  // update "Adding to:" hint
+  var active = (S.groups[t]||[]).find(function(g){ return g.id===ui.active[t]; });
+  document.getElementById('form-dest').textContent = active ? active.name : 'All';
+}
+
+// ── Render list ───────────────────────────────────────
+function renderList() {
+  var t     = ui.tab;
+  var gid   = ui.active[t];
+  var def   = defId(t);
+  var isAll = gid===def;
+  var rows  = isAll
+    ? S.entries.filter(function(e){ return e.type===t; })
+    : S.entries.filter(function(e){ return e.type===t && e.gid===gid; });
+
+  document.getElementById('tc-watch').textContent = S.entries.filter(function(e){ return e.type==='watch'; }).length;
+  document.getElementById('tc-read').textContent  = S.entries.filter(function(e){ return e.type==='read';  }).length;
+
+  var grp = (S.groups[t]||[]).find(function(g){ return g.id===gid; });
+  document.getElementById('lt').textContent = grp ? grp.emoji+' '+grp.name : 'All';
+  document.getElementById('lc').textContent = rows.length+' item'+(rows.length!==1?'s':'');
+
+  var el = document.getElementById('list');
+  if (!rows.length) { el.innerHTML='<div class="empty">nothing here yet — add something above ↑</div>'; return; }
+
+  el.innerHTML = rows.map(function(e){
+    var titleH = e.link
+      ? '<a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(e.title)+'</a>'
+      : esc(e.title);
+    var urlH   = e.link
+      ? '<div class="card-url"><a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(trimUrl(e.link))+'</a></div>' : '';
+    var notesH = e.notes ? '<div class="card-notes">'+esc(e.notes)+'</div>' : '';
+    var tagH   = '';
+    if (isAll && e.gid!==def) {
+      var g2 = (S.groups[t]||[]).find(function(g){ return g.id===e.gid; });
+      if (g2) tagH = '<span class="card-tag">'+g2.emoji+' '+esc(g2.name)+'</span>';
+    }
+    return '<div class="card">'
+      +'<div class="card-body">'
+      +'<div class="card-title">'+titleH+'</div>'+urlH+notesH
+      +'<div class="card-foot"><span class="card-date">'+e.date+'</span>'+tagH+'</div>'
+      +'</div>'
+      +'<button class="btn-del" data-act="delentry" data-id="'+e.id+'" title="Delete">🗑</button>'
+      +'</div>';
+  }).join('');
+}
+
+function renderAll() { renderChips(); renderList(); }
+
+// ── Events ────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  if (e.target.closest('#tt-watch')) { switchTab('watch'); return; }
+  if (e.target.closest('#tt-read'))  { switchTab('read');  return; }
+  if (e.target.id==='btn-add')       { addEntry(); return; }
+  if (e.target.id==='btn-nc')        { ui.newGroupOpen=true; renderChips(); return; }
+
+  var actEl = e.target.closest('[data-act]');
+  if (!actEl) return;
+  var act = actEl.dataset.act;
+  if (act==='selgroup')  { selectGroup(actEl.dataset.t, actEl.dataset.id); }
+  else if (act==='delgroup')  { e.stopPropagation(); deleteGroup(actEl.dataset.t, actEl.dataset.id); }
+  else if (act==='delentry')  { deleteEntry(Number(actEl.dataset.id)); }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key==='Enter' && (e.target.id==='f-title'||e.target.id==='f-link')) addEntry();
+});
+
+// ── Boot ──────────────────────────────────────────────
+loadLocal();
+renderAll();
+</script>
+</body>
+</html>
