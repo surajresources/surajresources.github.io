@@ -267,6 +267,12 @@ function restoreGroup(idx){
     if(live)live.gid=dg.group.id;
   });
   ui.active[dg.type]=dg.group.id;
+  // switch to the tab where the folder was restored so user can see it
+  ui.tab=dg.type;
+  document.getElementById('tt-watch').className='tt'+(dg.type==='watch'?' on':'');
+  document.getElementById('tt-read').className='tt'+(dg.type==='read'?' on':'');
+  document.getElementById('tt-bin').className='tt tt-bin';
+  document.getElementById('form-badge').textContent=dg.type.toUpperCase();
   persist();renderAll();toast('Folder restored ✓');
 }
 function emptyGroupBin(){
@@ -405,7 +411,7 @@ function renderList(){
 
   document.getElementById('tc-watch').textContent=S.entries.filter(function(e){return e.type==='watch';}).length;
   document.getElementById('tc-read').textContent=S.entries.filter(function(e){return e.type==='read';}).length;
-  document.getElementById('tc-bin').textContent=S.deleted.length;
+  document.getElementById('tc-bin').textContent=S.deleted.length+S.deletedGroups.length;
 
   var grp=isBin?null:(S.groups[t]||[]).find(function(g){return g.id===gid;});
   document.getElementById('lt').textContent=isBin?'🗑 Deleted Items':(grp?grp.emoji+' '+grp.name:'All');
