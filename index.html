@@ -48,6 +48,8 @@ header{background:var(--text);color:var(--bg);padding:22px 36px;display:flex;ali
 .chip-acts{display:none;gap:3px;margin-left:3px;}
 .chip:hover .chip-acts,.chip.on .chip-acts{display:flex;}
 .cbtn{background:none;border:none;cursor:pointer;font-size:11px;line-height:1;opacity:.5;transition:opacity .12s;color:inherit;padding:0 1px;}
+.chip-name{cursor:text;border-bottom:1px dashed transparent;transition:border-color .15s;}
+.chip:hover .chip-name,.chip.on .chip-name{border-bottom-color:currentColor;}
 .cbtn:hover{opacity:1;}
 .cbtn.x:hover{color:var(--del);opacity:1;}
 .chip-ef{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:var(--surface);border:1.5px solid var(--text);}
@@ -180,14 +182,14 @@ var FB_CONFIG = {
 };
 
 var LS='suraj_v7';
-var S={ entries:[], deleted:[], groups:{ watch:[{id:'w0',name:'All',emoji:'📋'}], read:[{id:'r0',name:'All',emoji:'📋'}] } };
+var S={ entries:[], deleted:[], deletedGroups:[], groups:{ watch:[{id:'w0',name:'All',emoji:'📋'}], read:[{id:'r0',name:'All',emoji:'📋'}] } };
 var ui={ tab:'watch', active:{watch:'w0',read:'r0'}, newGrp:false, editGrp:null, editEntry:null };
 
 function loadLocal(){
-  try{var d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.entries)S.entries=d.entries;if(d.deleted)S.deleted=d.deleted;if(d.groups)S.groups=d.groups;if(d.active)ui.active=d.active;}catch(e){}
+  try{var d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.entries)S.entries=d.entries;if(d.deleted)S.deleted=d.deleted;if(d.deletedGroups)S.deletedGroups=d.deletedGroups;if(d.groups)S.groups=d.groups;if(d.active)ui.active=d.active;}catch(e){}
 }
 function saveLocal(){
-  try{localStorage.setItem(LS,JSON.stringify({entries:S.entries,deleted:S.deleted,groups:S.groups,active:ui.active}));}catch(e){}
+  try{localStorage.setItem(LS,JSON.stringify({entries:S.entries,deleted:S.deleted,deletedGroups:S.deletedGroups,groups:S.groups,active:ui.active}));}catch(e){}
 }
 function setSync(s,m){document.getElementById('sd').className='sd '+s;document.getElementById('sl').textContent=m;}
 
@@ -199,12 +201,12 @@ try{
   var ref=db.collection('resources').doc('main');
   ref.onSnapshot(function(snap){
     clearTimeout(ct);
-    if(snap.exists){var d=snap.data();if(d.entries)S.entries=d.entries;if(d.deleted)S.deleted=d.deleted;if(d.groups)S.groups=d.groups;saveLocal();}
+    if(snap.exists){var d=snap.data();if(d.entries)S.entries=d.entries;if(d.deleted)S.deleted=d.deleted;if(d.deletedGroups)S.deletedGroups=d.deletedGroups;if(d.groups)S.groups=d.groups;saveLocal();}
     setSync('ok','synced ✓');renderAll();
   },function(err){clearTimeout(ct);console.error(err);setSync('err','offline');});
   fbSave=function(){
     setSync('busy','saving…');
-    ref.set({entries:S.entries,deleted:S.deleted,groups:S.groups})
+    ref.set({entries:S.entries,deleted:S.deleted,deletedGroups:S.deletedGroups,groups:S.groups})
       .then(function(){setSync('ok','synced ✓');})
       .catch(function(e){console.error(e);setSync('err','save failed');});
   };
@@ -241,12 +243,37 @@ function renameGroup(t,id,name){
 }
 function deleteGroup(t,id){
   var def=defId(t);
+  var g=S.groups[t].find(function(g){return g.id===id;});
+  if(!g)return;
+  // soft-delete: save group + its entries to deletedGroups
+  var itsEntries=S.entries.filter(function(e){return e.type===t&&e.gid===id;});
+  S.deletedGroups.unshift({group:g,type:t,entries:itsEntries,deletedAt:today()});
+  // move entries to All temporarily so they don't vanish
   S.entries.forEach(function(e){if(e.type===t&&e.gid===id)e.gid=def;});
   S.groups[t]=S.groups[t].filter(function(g){return g.id!==id;});
   if(ui.active[t]===id)ui.active[t]=def;
-  persist();renderAll();
+  persist();renderAll();toast('Folder moved to bin');
 }
 
+function restoreGroup(idx){
+  var dg=S.deletedGroups[idx];if(!dg)return;
+  S.deletedGroups.splice(idx,1);
+  // re-add group
+  S.groups[dg.type].push(dg.group);
+  // move entries back (currently sitting in All with same gid)
+  // some may have been deleted since — just restore the ones still in All
+  dg.entries.forEach(function(saved){
+    var live=S.entries.find(function(e){return e.id===saved.id;});
+    if(live)live.gid=dg.group.id;
+  });
+  ui.active[dg.type]=dg.group.id;
+  persist();renderAll();toast('Folder restored ✓');
+}
+function emptyGroupBin(){
+  if(!S.deletedGroups.length)return;
+  if(!confirm('Permanently delete '+S.deletedGroups.length+' folder(s) from bin?'))return;
+  S.deletedGroups=[];persist();renderAll();toast('Folder bin emptied');
+}
 // ── Entries ───────────────────────────────────────────
 function addEntry(){
   var title=document.getElementById('f-title').value.trim();
@@ -277,7 +304,7 @@ function restore(id){
 function emptyBin(){
   if(!S.deleted.length)return;
   if(!confirm('Permanently delete all '+S.deleted.length+' item(s)?'))return;
-  S.deleted=[];persist();renderAll();toast('Bin emptied');
+  S.deleted=[];S.deletedGroups=[];persist();renderAll();toast('Bin emptied');
 }
 function copyAll(){
   var isBin=ui.tab==='bin';
@@ -342,7 +369,7 @@ function renderChips(){
     } else {
       var ea=g.id!==def?'<button class="cbtn" data-act="egrp" data-t="'+t+'" data-id="'+g.id+'" title="Rename">✏️</button>':'';
       var da=g.id!==def?'<button class="cbtn x" data-act="dgrp" data-t="'+t+'" data-id="'+g.id+'" title="Delete">✕</button>':'';
-      html+='<div class="chip'+on+'" data-act="sgrp" data-t="'+t+'" data-id="'+g.id+'">'+g.emoji+' '+esc(g.name)+' <span class="chip-c">'+cnt+'</span><span class="chip-acts">'+ea+da+'</span></div>';
+      html+='<div class="chip'+on+'" data-act="sgrp" data-t="'+t+'" data-id="'+g.id+'">'+g.emoji+' <span class="chip-name" data-act="egrp" data-t="'+t+'" data-id="'+g.id+'" title="Double-click to rename">'+esc(g.name)+'</span> <span class="chip-c">'+cnt+'</span><span class="chip-acts">'+ea+da+'</span></div>';
     }
   });
   if(!ui.newGrp){
@@ -382,14 +409,30 @@ function renderList(){
 
   var grp=isBin?null:(S.groups[t]||[]).find(function(g){return g.id===gid;});
   document.getElementById('lt').textContent=isBin?'🗑 Deleted Items':(grp?grp.emoji+' '+grp.name:'All');
-  document.getElementById('lc').textContent=rows.length+' item'+(rows.length!==1?'s':'');
-  document.getElementById('btn-empty').style.display=(isBin&&S.deleted.length)?'':'none';
+  var totalBin=isBin?rows.length+S.deletedGroups.length:rows.length;
+  document.getElementById('lc').textContent=totalBin+' item'+(totalBin!==1?'s':'');
+  document.getElementById('btn-empty').style.display=(isBin&&(S.deleted.length||S.deletedGroups.length))?'':'none';
   document.getElementById('btn-copy-all').style.display=rows.length&&!isBin?'':'none';
 
   var el=document.getElementById('list');
-  if(!rows.length){el.innerHTML='<div class="empty">'+(isBin?'🗑 bin is empty — nothing deleted yet':'nothing here yet — add something above ↑')+'</div>';return;}
+  var binGroupsHtml='';
+  if(isBin&&S.deletedGroups.length){
+    binGroupsHtml=S.deletedGroups.map(function(dg,i){
+      return '<div class="card" style="border-left:3px solid var(--border2)">'
+        +'<div class="card-row"><div class="card-body">'
+        +'<div class="card-title" style="font-size:14px;">'+dg.group.emoji+' '+esc(dg.group.name)
+        +' <span class="card-tag">'+dg.type+'</span>'
+        +' <span class="card-tag">'+dg.entries.length+' item'+(dg.entries.length!==1?'s':'')+'</span></div>'
+        +'<div class="card-foot"><span class="card-date">deleted '+dg.deletedAt+'</span></div>'
+        +'</div>'
+        +'<div class="card-acts"><button class="ca grn" data-act="restoregrp" data-idx="'+i+'" title="Restore folder">↩</button></div>'
+        +'</div></div>';
+    }).join('');
+  }
+  if(isBin&&!rows.length&&!S.deletedGroups.length){el.innerHTML='<div class="empty">🗑 bin is empty — nothing deleted yet</div>';return;}
+  if(!isBin&&!rows.length){el.innerHTML='<div class="empty">nothing here yet — add something above ↑</div>';return;}
 
-  el.innerHTML=rows.map(function(e){
+  el.innerHTML=binGroupsHtml+rows.map(function(e){
     var ed=!isBin&&ui.editEntry===e.id;
     var titleH=e.link?'<a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(e.title)+'</a>':esc(e.title);
     var urlH=e.link?'<div class="card-url"><a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(trimUrl(e.link))+'</a></div>':'';
@@ -445,6 +488,7 @@ document.addEventListener('click',function(e){
   else if(act==='cx') {ui.editEntry=null;renderList();}
   else if(act==='del'){softDelete(id);}
   else if(act==='restore'){restore(id);}
+  else if(act==='restoregrp'){restoreGroup(Number(actEl.dataset.idx));}
 });
 
 document.addEventListener('keydown',function(e){
