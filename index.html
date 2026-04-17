@@ -308,7 +308,7 @@ function restore(id){
   S.entries.unshift(e);persist();renderAll();toast('Restored ✓');
 }
 function emptyBin(){
-  if(!S.deleted.length)return;
+  if(!S.deleted.length&&!S.deletedGroups.length)return;
   if(!confirm('Permanently delete all '+S.deleted.length+' item(s)?'))return;
   S.deleted=[];S.deletedGroups=[];persist();renderAll();toast('Bin emptied');
 }
@@ -432,7 +432,7 @@ function renderList(){
         +' <span class="card-tag">'+dg.entries.length+' item'+(dg.entries.length!==1?'s':'')+'</span></div>'
         +'<div class="card-foot"><span class="card-date">deleted '+dg.deletedAt+'</span></div>'
         +'</div>'
-        +'<div class="card-acts"><button class="ca grn" data-act="restoregrp" data-idx="'+i+'" title="Restore folder">↩</button></div>'
+        +'<div class="card-acts"><button class="ca grn" data-act="restoregrp" data-idx="'+i+'" title="Restore folder">↩</button><button class="ca red" data-act="permdelgrp" data-idx="'+i+'" title="Delete permanently">🗑</button></div>'
         +'</div></div>';
     }).join('');
   }
@@ -498,6 +498,7 @@ document.addEventListener('click',function(e){
   else if(act==='del'){softDelete(id);}
   else if(act==='restore'){restore(id);}
   else if(act==='restoregrp'){restoreGroup(Number(a.dataset.idx));}
+  else if(act==='permdelgrp'){if(confirm('Permanently delete this folder?')){S.deletedGroups.splice(Number(a.dataset.idx),1);persist();renderAll();toast('Folder deleted permanently');}}
 });
 
 document.addEventListener('keydown',function(e){
