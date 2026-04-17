@@ -80,6 +80,9 @@ textarea.fi{resize:vertical;min-height:68px;line-height:1.5;font-size:13px;}
 .lc{font-family:var(--font-m);font-size:11px;color:var(--muted);}
 .btn-empty{font-family:var(--font-m);font-size:11px;padding:5px 14px;border-radius:20px;border:1.5px solid var(--del);background:none;color:var(--del);cursor:pointer;transition:all .15s;}
 .btn-empty:hover{background:var(--del);color:#fff;}
+.btn-copy-all{font-family:var(--font-m);font-size:11px;padding:5px 14px;border-radius:20px;border:1.5px solid var(--text);background:none;color:var(--text);cursor:pointer;transition:all .15s;}
+.btn-copy-all:hover{background:var(--text);color:var(--bg);}
+.btn-copy-all.copied{border-color:var(--green);color:var(--green);}
 
 /* entry card */
 .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 16px 14px 18px;margin-bottom:10px;animation:pop .18s ease;transition:border-color .15s;}
@@ -158,6 +161,7 @@ textarea.ei{resize:vertical;min-height:56px;line-height:1.5;}
     <div class="lt" id="lt"></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="lc" id="lc"></div>
+      <button class="btn-copy-all" id="btn-copy-all" style="display:none">📋 Copy All</button>
       <button class="btn-empty" id="btn-empty" style="display:none">Empty Bin</button>
     </div>
   </div>
@@ -275,6 +279,23 @@ function emptyBin(){
   if(!confirm('Permanently delete all '+S.deleted.length+' item(s)?'))return;
   S.deleted=[];persist();renderAll();toast('Bin emptied');
 }
+function copyAll(){
+  var isBin=ui.tab==='bin';
+  var t=isBin?'watch':ui.tab,gid=ui.active[t],def=defId(t),isAll=gid===def;
+  var rows=isBin?S.deleted:(isAll?S.entries.filter(function(e){return e.type===t;}):S.entries.filter(function(e){return e.type===t&&e.gid===gid;}));
+  if(!rows.length){toast('Nothing to copy');return;}
+  var text=rows.map(function(e,i){
+    var line=(i+1)+'. '+e.title;
+    if(e.link)line+='\n   '+e.link;
+    if(e.notes)line+='\n   '+e.notes;
+    return line;
+  }).join('\n\n');
+  navigator.clipboard.writeText(text).then(function(){
+    toast('Copied '+rows.length+' item'+(rows.length!==1?'s':'')+'!');
+    var b=document.getElementById('btn-copy-all');
+    if(b){b.textContent='✓ Copied';b.classList.add('copied');setTimeout(function(){b.textContent='📋 Copy All';b.classList.remove('copied');},1500);}
+  }).catch(function(){toast('Copy failed');});
+}
 function copyEntry(id){
   var e=S.entries.find(function(e){return e.id===id;});if(!e)return;
   var txt=e.title+(e.link?'\n'+e.link:'')+(e.notes?'\n'+e.notes:'');
@@ -363,6 +384,7 @@ function renderList(){
   document.getElementById('lt').textContent=isBin?'🗑 Deleted Items':(grp?grp.emoji+' '+grp.name:'All');
   document.getElementById('lc').textContent=rows.length+' item'+(rows.length!==1?'s':'');
   document.getElementById('btn-empty').style.display=(isBin&&S.deleted.length)?'':'none';
+  document.getElementById('btn-copy-all').style.display=rows.length&&!isBin?'':'none';
 
   var el=document.getElementById('list');
   if(!rows.length){el.innerHTML='<div class="empty">'+(isBin?'🗑 bin is empty — nothing deleted yet':'nothing here yet — add something above ↑')+'</div>';return;}
@@ -408,6 +430,7 @@ document.addEventListener('click',function(e){
   if(e.target.closest('#tt-read')) {switchTab('read'); return;}
   if(e.target.closest('#tt-bin'))  {switchTab('bin');  return;}
   if(e.target.id==='btn-add')      {addEntry();return;}
+  if(e.target.id==='btn-copy-all') {copyAll();return;}
   if(e.target.id==='btn-empty')    {emptyBin();return;}
   if(e.target.id==='btn-nc')       {ui.newGrp=true;renderChips();return;}
 
